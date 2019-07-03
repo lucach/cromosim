@@ -951,6 +951,10 @@ def add_people_in_box(Np, dom, xmin, xmax, ymin, ymax, rmin, rmax, rng):
     return people
 
 
+def do_savefig(fig, filename):
+    fig.savefig(filename, dpi=600, bbox_inches='tight', pad_inches=0)
+
+
 def plot_people(ifig, dom, people, contacts, U, colors, time=-1, axis=None,
                 plot_people=True, plot_contacts=True, plot_velocities=True,
                 plot_paths=False,paths=None,plot_sensors=False,sensors=[],
@@ -1063,9 +1067,7 @@ def plot_people(ifig, dom, people, contacts, U, colors, time=-1, axis=None,
         ax1.set_title('time = {:.2F}'.format(time)+' s')
     fig.canvas.draw()
     if (savefig):
-        def savefig(fig, filename):
-            fig.savefig(filename,dpi=600,bbox_inches='tight',pad_inches=0)
-        process = Process(target=savefig, args=(fig,filename,))
+        process = Process(target=do_savefig, args=(fig,filename,))
         process.start()
         return process
 
