@@ -76,6 +76,8 @@ def main():
             Directional dependence (between 0 and 1 = fully isotropic case)
         eta: float
             Friction coefficient (typically 240000 kg m^-1 s^-1)
+        fleeing_coeff: float
+            Fleeing speed coefficient (1 in normal cases, > 1 for panic)
         N: list
             Number of persons in each boxes
         init_people_box: list
@@ -134,6 +136,7 @@ def main():
     Fwall = input["Fwall"]
     lambda_ = input["lambda"]
     eta = input["eta"]
+    fleeing_coeff = input["fleeing_coeff"]
     init_people_box = input["init_people_box"]
     exit_people_box = input["exit_people_box"]
     Tf = input["Tf"]
@@ -239,7 +242,7 @@ def main():
             #         plt.pause(0.01)
             cc = 0
         Forces = compute_forces(F, Fwall, people, contacts, Uold, Vd, lambda_, delta, kappa, eta)
-        U = dt*(Vd-Uold)/tau + Uold + dt*Forces/mass
+        U = dt*fleeing_coeff*(Vd-Uold)/tau + Uold + dt*Forces/mass
         if (len(sensors)>0):
             people, io_id, io_times, io_dir, io_pts = move_people(t, dt, people, U, crosslines=sensors)
             ## Store sensor data
