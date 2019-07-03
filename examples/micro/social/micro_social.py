@@ -7,7 +7,6 @@
 #
 # License: GPL
 
-
 import sys, os
 from cromosim import *
 from cromosim.micro import *
@@ -205,6 +204,7 @@ Uold = sp.zeros((Np,2))
 Np_init = Np
 people_id = sp.arange(Np)
 results = sp.copy(people[:,:2]).reshape((Np,2,1))
+savefig_processes = []
 
 ## Array to store sensor data : time dir pts[2] for each sensor line
 if (len(sensors)>0):
@@ -221,12 +221,13 @@ while (t<Tf):
     I, J, Vd = compute_desired_velocity(dom, people)
     if ((cc>=drawper) or (counter==0)):
         print("===> time = ",t," number of persons = ",Np)
-        plot_people(10, dom, people, contacts, Vd, people[:,2], time=t,
-                        plot_people=plot_p, plot_contacts=plot_c,
-                        plot_velocities=plot_v, plot_paths=plot_pa,paths=results,
-                        plot_sensors=plot_s, sensors=sensors,
-                        savefig=True, filename=prefix+'fig_'+ \
-                        str(counter).zfill(6)+'.png')
+        filename = prefix + 'fig_' + str(counter).zfill(6) + '.png'
+        process = plot_people(10, dom, people, contacts, Vd, people[:,2], time=t,
+                              plot_people=plot_p, plot_contacts=plot_c,
+                              plot_velocities=plot_v, plot_paths=plot_pa,paths=results,
+                              plot_sensors=plot_s, sensors=sensors,
+                              savefig=True, filename=filename)
+        savefig_processes.append(process)
         plt.pause(0.01)
         # if (t>0):
         #     for i, s in enumerate(sensors):
@@ -263,6 +264,11 @@ while (t<Tf):
     cc += 1
     counter += 1
 
+# Join async processes for saving figures.
+for process in savefig_processes:
+    process.join()
+
+# Plot sensors data.
 if (len(sensors)>0):
     for i, s in enumerate(sensors):
         plot_sensor_data(30+i, sensor_data[:,:,i], t, savefig=True,

@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Circle, Rectangle, Polygon, Arrow
 from matplotlib.lines import Line2D
 from matplotlib.collections import EllipseCollection, LineCollection
-
+from multiprocessing import Process
 
 def compute_contacts(dom, people, dmax):
     """
@@ -958,7 +958,9 @@ def plot_people(ifig, dom, people, contacts, U, colors, time=-1, axis=None,
     """
     This function draws spheres for the individuals, \
     lines for the active contacts and arrows for the \
-    (desired or real) velocities.
+    (desired or real) velocities. If specified, also \
+    spawns a new process (which is returned) to save \
+    the resulting figure to the disk.
 
     Parameters
     ----------
@@ -994,6 +996,10 @@ def plot_people(ifig, dom, people, contacts, U, colors, time=-1, axis=None,
         png filename used to write the figure
     cmap: string
         matplotlib colormap name
+    Returns
+    -------
+    process: multiprocessing.Process
+        process which is saving the image
     """
     fig = plt.figure(ifig)
     plt.clf()
@@ -1057,7 +1063,11 @@ def plot_people(ifig, dom, people, contacts, U, colors, time=-1, axis=None,
         ax1.set_title('time = {:.2F}'.format(time)+' s')
     fig.canvas.draw()
     if (savefig):
-        fig.savefig(filename,dpi=600,bbox_inches='tight',pad_inches=0)
+        def savefig(fig, filename):
+            fig.savefig(filename,dpi=600,bbox_inches='tight',pad_inches=0)
+        process = Process(target=savefig, args=(fig,filename,))
+        process.start()
+        return process
 
 
 def plot_sensor_data(ifig, sensor_data, time, initial_door_dist=None, axis = None, \
