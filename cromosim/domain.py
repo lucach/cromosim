@@ -260,6 +260,34 @@ class Domain():
         self.desired_velocity_Y = grad_Y/norm
         return self.door_distance, self.desired_velocity_X, self.desired_velocity_Y
 
+    def get_door_rectangle(self):
+        """To compute the coordinates of the bounding box of the door.
+        This method assumes only one door.
+
+        Returns
+        -------
+
+        rectangle : list
+            coordinates of the bounding box as [x0, y0, x1, y1]
+        """
+        mask_red = (self.image_red == 255) \
+                  *(self.image_green == 0) \
+                  *(self.image_blue == 0)
+        ind_red = sp.where( mask_red )
+        extension_perc = 0.01
+        extension_px_x = self.width * extension_perc
+        extension_px_y = self.height * extension_perc
+        x0 = (min(ind_red[1]) - extension_px_x) * self.pixel_size
+        x1 = (max(ind_red[1]) + extension_px_x) * self.pixel_size
+        y0 = (min(ind_red[0]) - extension_px_y) * self.pixel_size
+        y1 = (max(ind_red[0]) + extension_px_y) * self.pixel_size
+        # Keep coordinates within the image
+        x0 = max(x0, self.xmin)
+        x1 = min(x1, self.xmax)
+        y0 = max(y0, self.ymin)
+        y1 = min(y1, self.ymax)
+        return [x0, y0, x1, y1]
+
     def plot(self,id=1,dpi=150):
         """
         To plot the computational domain

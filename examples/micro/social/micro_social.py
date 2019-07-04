@@ -212,6 +212,9 @@ def main():
     results = sp.copy(people[:,:2]).reshape((Np,2,1))
     savefig_processes = []
 
+    ## Add a sensor exactly at the exit door
+    sensors.append(dom.get_door_rectangle())
+
     ## Array to store sensor data : time dir pts[2] for each sensor line
     if (len(sensors)>0):
         sensor_data = sp.zeros((Np,4,len(sensors)))
