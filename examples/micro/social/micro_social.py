@@ -138,6 +138,8 @@ def main():
     lambda_ = input["lambda"]
     eta = input["eta"]
     fleeing_coeff = input["fleeing_coeff"]
+    herding_factor = input["herding_factor"]
+    herding_radius = input["herding_radius"]
     init_people_box = input["init_people_box"]
     exit_people_box = input["exit_people_box"]
     Tf = input["Tf"]
@@ -222,6 +224,19 @@ def main():
     if (len(sensors)>0):
         sensor_data = sp.zeros((Np,4,len(sensors)))
 
+    # Mark a % of pedestrtian (according to herding_factor) as following
+    # herding behaviour (i.e., they will not know direction to exit).
+    is_herding = sp.zeros((Np, 1))
+    rng = sp.random.RandomState()
+    for i in range(len(is_herding)):
+        is_herding[i] = rng.binomial(1, herding_factor)
+    herding_ids = []
+    for i in range(len(is_herding)):
+        if is_herding[i]:
+            herding_ids.append(i)
+    herding_ids = sp.array(herding_ids)
+    original_id_to_row = list(range(Np))
+
     """
         Main loop
     """
@@ -231,6 +246,24 @@ def main():
     while (t<Tf):
         contacts = compute_contacts(dom, people, dmax)
         I, J, Vd = compute_desired_velocity(dom, people)
+
+        # Herding behaviour
+        if len(herding_ids) > 0:
+
+            # Remove exited ids
+            remaining_ids = set(people_id)
+            herding_id = [id for id in herding_ids if id in remaining_ids]
+            # And re-adapt remaining ones by building a reverse lookup dict
+            for i in range(len(people_id)):
+                original_id_to_row[people_id[i]] = i
+            herding_id = [original_id_to_row[id] for id in herding_id]
+            # Re-compute direction for individuals with herding behaviour.
+            new_vd = Vd.copy()
+            neighbors = get_neighbors(people, herding_id, herding_radius)
+            for i in range(len(herding_id)):
+                new_vd[i] = compute_new_direction(Vd, neighbors[i])
+            Vd = new_vd
+
         if ((cc>=drawper) or (counter==0)):
             print("===> time = ",t," number of persons = ",Np)
             filename = prefix + 'fig_' + str(counter).zfill(6) + '.png'
@@ -256,7 +289,8 @@ def main():
                     sensor_data[ss,3,i] = io_pts[i][:,1]
         else:
             people = move_people(t, dt, people, U)
-        people, U, [people_id] = exit_door(2*dom.pixel_size, dom, people, U, arrays=[ people_id])
+        people, U, [people_id] = exit_door(2*dom.pixel_size, dom, eople, U,
+                                           arrays=[people_id])
         Np = people.shape[0]
         if cc == 0:
             people_exited.append(Np_last_second-Np)

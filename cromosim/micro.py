@@ -16,6 +16,67 @@ from matplotlib.lines import Line2D
 from matplotlib.collections import EllipseCollection, LineCollection
 from multiprocessing import Process
 
+
+def get_neighbors(people, centers_idx, radius):
+    """
+    This function uses a KDTree method to find people located at a distance \
+    smaller than the specified radius from some people.
+
+    Parameters
+    ----------
+    people: numpy array
+        people coordinates and radius : x,y,r
+    centers_idx: list
+        list of identifiers of the people whose neighbors should be determined
+    radius: float
+        threshold value used to consider another person as neighbor
+
+    Returns
+    -------
+    neighbors_lists: list of lists
+        for each element in centers_idx, a list of its neighbors found \
+        within radius
+    """
+
+    centers = people[centers_idx, :2]
+    kd = cKDTree(people[:, :2])
+    neighbors_lists = kd.query_ball_point(centers, radius)
+    for i in range(len(neighbors_lists)):
+        neighbors_lists[i].remove(centers_idx[i])
+    return neighbors_lists
+
+
+def compute_new_direction(Vd, neighbors):
+    """
+    If points is an empty list, determines the new direction vector at random.
+    Otherwise, the new vector is the average of the directions of its
+    neighbors.
+
+    Parameters
+    ----------
+    Vd: numpy array
+        people desired velocities
+    neighbors: list
+        identifiers of the people whose velocity should be considered
+
+    Returns
+    -------
+    v: numpy array
+        a normalized vector [x, y] representing the new direction as \
+        specified above
+    """
+
+    if len(neighbors) > 0:
+        sumV = [0, 0]
+        for point in neighbors:
+            sumV += Vd[point]
+        avgV = sumV / len(neighbors)
+    else:
+        rng = sp.random.RandomState()
+        avgV = [rng.rand(), rng.rand()]
+    return sp.array(avgV) / sp.linalg.norm(avgV)
+
+
 def compute_contacts(dom, people, dmax):
     """
     This function uses a KDTree method to find the contacts \
@@ -78,6 +139,7 @@ def compute_contacts(dom, people, dmax):
     contacts = sp.vstack([contacts,wall_contacts])
     return sp.array(contacts)
 
+
 def compute_desired_velocity(dom, people):
     """
     This function determines people desired velocities from the desired \
@@ -105,6 +167,7 @@ def compute_desired_velocity(dom, people):
     Vd[:,0] = dom.desired_velocity_X[I,J]
     Vd[:,1] = dom.desired_velocity_Y[I,J]
     return I,J,Vd
+
 
 def compute_forces(F, Fwall, people, contacts, U, Vd, lambda_, delta, k, eta):
     """
