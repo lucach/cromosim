@@ -12,6 +12,7 @@ from cromosim import *
 from cromosim.micro import *
 from optparse import OptionParser
 import json
+import pickle
 
 
 def main():
@@ -211,9 +212,11 @@ def main():
     people_id = sp.arange(Np)
     results = sp.copy(people[:,:2]).reshape((Np,2,1))
     savefig_processes = []
+    people_exited = []
+    Np_last_second = Np
 
     ## Add a sensor exactly at the exit door
-    sensors.append(dom.get_door_rectangle())
+    #sensors.append(dom.get_door_rectangle())
 
     ## Array to store sensor data : time dir pts[2] for each sensor line
     if (len(sensors)>0):
@@ -238,11 +241,6 @@ def main():
                                   savefig=True, filename=filename)
             savefig_processes.append(process)
             plt.pause(0.01)
-            # if (t>0):
-            #     for i, s in enumerate(sensors):
-            #         plot_sensor_data(30+i, sensor_data[:,:,i], t, savefig=True,
-            #                 filename=prefix+'sensor_'+str(i)+'_'+str(counter)+'.png')
-            #         plt.pause(0.01)
             cc = 0
         Forces = compute_forces(F, Fwall, people, contacts, Uold, Vd, lambda_, delta, kappa, eta)
         U = dt*fleeing_coeff*(Vd-Uold)/tau + Uold + dt*Forces/mass
@@ -260,6 +258,9 @@ def main():
             people = move_people(t, dt, people, U)
         people, U, [people_id] = exit_door(2*dom.pixel_size, dom, people, U, arrays=[ people_id])
         Np = people.shape[0]
+        if cc == 0:
+            people_exited.append(Np_last_second-Np)
+            Np_last_second = Np
         if (Np == 0):
             print("END... Nobody here !")
             break
@@ -283,6 +284,16 @@ def main():
             plot_sensor_data(30+i, sensor_data[:,:,i], t, savefig=True,
                         filename=prefix+'sensor_'+str(i)+'_'+str(counter)+'.png')
             plt.pause(0.01)
+
+    # Save plotted values as a pickle dump named after the background.
+    with open(background + '.pickle', 'wb') as f:
+        pickle.dump(people_exited, f)
+    # Show output flux.
+    fig = plt.figure(100)
+    plt.clf()
+    ax = fig.add_subplot(111)
+    ax.set_title("Output flux (pedestrians/second)")
+    ax.plot(people_exited)
 
     plt.ioff()
     plt.show()
