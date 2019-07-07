@@ -343,7 +343,7 @@ def main():
 
         plt.ioff()
         #plt.show()
-        plt.savefig(prefix + str(fleeing) + "/" + "flux.png")
+        plt.savefig(prefix + str(fleeing_speed) + "/" + "flux.png")
 
 
     sys.exit()
