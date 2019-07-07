@@ -137,7 +137,7 @@ def main():
     Fwall = input["Fwall"]
     lambda_ = input["lambda"]
     eta = input["eta"]
-    fleeing_coeff = input["fleeing_coeff"]
+    fleeing_speed = input["fleeing_speed"]
     herding_factor = input["herding_factor"]
     herding_radius = input["herding_radius"]
     init_people_box = input["init_people_box"]
@@ -276,7 +276,14 @@ def main():
             plt.pause(0.01)
             cc = 0
         Forces = compute_forces(F, Fwall, people, contacts, Uold, Vd, lambda_, delta, kappa, eta)
-        U = dt*fleeing_coeff*(Vd-Uold)/tau + Uold + dt*Forces/mass
+        U = dt*(fleeing_speed*Vd-Uold)/tau + Uold + dt*Forces/mass
+        # Cap velocity to fleeing_speed (i.e., the norm of the velocity must
+        # never exceed the allowed maximum speed).
+        norms = [sp.linalg.norm(u) for u in U]
+        U = sp.array(
+            [U[i] if norms[i] <= fleeing_speed else U[i]*fleeing_speed/norms[i]
+             for i in range(len(U))])
+
         if (len(sensors)>0):
             people, io_id, io_times, io_dir, io_pts = move_people(t, dt, people, U, crosslines=sensors)
             ## Store sensor data
@@ -289,7 +296,7 @@ def main():
                     sensor_data[ss,3,i] = io_pts[i][:,1]
         else:
             people = move_people(t, dt, people, U)
-        people, U, [people_id] = exit_door(2*dom.pixel_size, dom, eople, U,
+        people, U, [people_id] = exit_door(2*dom.pixel_size, dom, people, U,
                                            arrays=[people_id])
         Np = people.shape[0]
         if cc == 0:
