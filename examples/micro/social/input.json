@@ -21,7 +21,7 @@
   "Fwall":2000.0,
   "lambda":0.5,
   "eta":240000.0,
-  "fleeing_speed":1.5,
+  "fleeing_speeds":[1.0, 1.5],
   "herding_factor":0.0,
   "herding_radius":3.0,
   "init_people_box":[[20.1,31.06,0.1,15.28],[0.1,11.06,0.1,15.28]],
