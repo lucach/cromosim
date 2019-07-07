@@ -338,7 +338,9 @@ def main():
         fig = plt.figure(100)
         plt.clf()
         ax = fig.add_subplot(111)
-        ax.set_title("Output flux (pedestrians/second)")
+        mean_outflux = sp.mean(people_exited)
+        ax.set_title("Output flux (pedestrians/second)\n Mean: " +
+                     str(mean_outflux))
         ax.plot(people_exited)
 
         plt.ioff()
