@@ -218,6 +218,8 @@ def main():
         results = sp.copy(people[:,:2]).reshape((Np,2,1))
         savefig_processes = []
         people_exited = []
+        people_passed_over_sensors = set()
+        people_corridor = []
         Np_last_second = Np
 
         ## Add a sensor exactly at the exit door
@@ -293,6 +295,8 @@ def main():
                 ## Store sensor data
                 for i,s in enumerate(io_id):
                     ss = people_id[s]
+                    for person in ss:
+                        people_passed_over_sensors.add(person)
                     if (s.shape[0]>0):
                         sensor_data[ss,0,i] = io_times[i]
                         sensor_data[ss,1,i] = io_dir[i]
@@ -305,6 +309,7 @@ def main():
             Np = people.shape[0]
             if cc == 0:
                 people_exited.append(Np_last_second-Np)
+                people_corridor.append(len(people_passed_over_sensors)-sum(people_exited))
                 Np_last_second = Np
             if (Np == 0):
                 print("END... Nobody here !")
@@ -342,10 +347,23 @@ def main():
         ax.set_title("Output flux (pedestrians/second)\n Mean: " +
                      str(mean_outflux))
         ax.plot(people_exited)
+        plt.savefig(prefix + str(fleeing_speed) + "/" + "flux.png")
+
+        # Show pedestrians in corridor.
+        fig = plt.figure(101)
+        plt.clf()
+        ax = fig.add_subplot(111)
+        mean = sp.mean(people_corridor)
+        std = sp.std(people_corridor)
+        ax.set_title("Corridor pedestrians\n Mean: {0:.2f}\n Std : {1:.2f} "
+                     "".format(mean, std))
+        ax.plot(people_corridor)
+
+        plt.savefig(prefix + str(fleeing_speed) + "/" + "corridor.png")
+
 
         plt.ioff()
         #plt.show()
-        plt.savefig(prefix + str(fleeing_speed) + "/" + "flux.png")
 
 
     sys.exit()
