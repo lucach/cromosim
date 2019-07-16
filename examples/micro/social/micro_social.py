@@ -331,23 +331,11 @@ def main():
         # Plot sensors data.
         if (len(sensors)>0):
             for i, s in enumerate(sensors):
-                plot_sensor_data(30+i, sensor_data[:,:,i], t, savefig=True,
+                plot_sensor_flux(30+i, sensor_data[:,:,i], t, savefig=True,
                     filename=prefix + str(fleeing_speed) + "/"
                     +'sensor_'+str(i)+'_'+str(counter)+'.png')
                 plt.pause(0.01)
 
-        # Save plotted values as a pickle dump named after the background.
-        with open(background + '.pickle', 'wb') as f:
-            pickle.dump(people_exited, f)
-        # Show output flux.
-        fig = plt.figure(100)
-        plt.clf()
-        ax = fig.add_subplot(111)
-        mean_outflux = sp.mean(people_exited)
-        ax.set_title("Output flux (pedestrians/second)\n Mean: " +
-                     str(mean_outflux))
-        ax.plot(people_exited)
-        plt.savefig(prefix + str(fleeing_speed) + "/" + "flux.png")
 
         # Show pedestrians in corridor.
         fig = plt.figure(101)
@@ -355,12 +343,14 @@ def main():
         ax = fig.add_subplot(111)
         mean = sp.mean(people_corridor)
         std = sp.std(people_corridor)
-        ax.set_title("Corridor pedestrians\n Mean: {0:.2f}\n Std : {1:.2f} "
+        ax.set_title("Pedestrians in corridor\n Mean: {0:.2f}\n STD : {1:.2f} "
                      "".format(mean, std))
         ax.plot(people_corridor)
 
         plt.savefig(prefix + str(fleeing_speed) + "/" + "corridor.png")
-
+        # Save plotted values as a pickle dump named as the filename.
+        with open(prefix + str(fleeing_speed) + "/corridor.pickle", 'wb') as f:
+            pickle.dump(people_corridor, f)
 
         plt.ioff()
         #plt.show()

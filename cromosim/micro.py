@@ -15,7 +15,7 @@ from matplotlib.patches import Ellipse, Circle, Rectangle, Polygon, Arrow
 from matplotlib.lines import Line2D
 from matplotlib.collections import EllipseCollection, LineCollection
 from multiprocessing import Process
-
+import pickle
 
 def get_neighbors(people, centers_idx, radius):
     """
@@ -1229,6 +1229,73 @@ def plot_sensor_data(ifig, sensor_data, time, initial_door_dist=None, axis = Non
     #     widths = tmp[1:]-tmp[:-1]
     #     heights = 1/widths
     #     ax4.bar(bins, heights, width=widths,color='r',align='center')
+    fig.set_tight_layout(True)
+    fig.canvas.draw()
+    if (savefig):
+        fig.savefig(filename,dpi=300)
+
+def plot_sensor_flux(ifig, sensor_data, time, initial_door_dist=None,
+                      axis = None, \
+                     flux_timestep=1, savefig=False, filename='fig.png', cmap='winter'):
+    """
+    When a sensor line is defined this function allows to draw the \
+    repartition of the people exit times.
+
+    Parameters
+    ----------
+
+    ifig: int
+        figure number
+    sensor_data : numpy array
+        [time, direction, intersection_point[2]] for each individual
+    time: float
+        time in seconds
+    initial_door_dist: numpy array
+        people initial distance to the door
+    axis: numpy array
+        matplotlib axis : [xmin, xmax, ymin, ymax]
+    flux_timestep: float
+        timestep for the fluxes : number of persons per flux_timestep seconds
+    savefig: boolean
+        writes the figure as a png file if true
+    filename: string
+        png filename used to write the figure
+    cmap: string
+        matplotlib colormap name
+    """
+    Np = sensor_data.shape[0]
+    tmin = 0
+    tmax = time
+
+    fig = plt.figure(ifig)
+    plt.clf()
+
+    ax = fig.add_subplot(111)
+
+    tgrid = sp.arange(tmin, tmax, step=flux_timestep)
+    tgrid = sp.append(tgrid, tgrid[-1]+flux_timestep)
+    flux_exits = sp.zeros(tgrid.shape)
+    flux_entries = sp.zeros(tgrid.shape)
+    exits = sp.where(sensor_data[:,1]==1)[0]
+    entries = sp.where(sensor_data[:,1]==-1)[0]
+    t_exits = sp.ceil((sensor_data[exits,0]-tmin)/flux_timestep)
+    t_entries = sp.ceil((sensor_data[entries,0]-tmin)/flux_timestep)
+    #t_exits = sp.floor((sensor_data[exits,0]-tmin)/flux_timestep)
+    #t_entries = sp.floor((sensor_data[entries,0]-tmin)/flux_timestep)
+    unique_entries, counts_entries = sp.unique(t_entries, return_counts=True)
+    flux_entries[unique_entries.astype(int)] = counts_entries
+
+    ax.plot(tgrid, flux_entries)
+    ax.set_title("Flux (pedestrians/second) \n Mean: {0:.2f} \n STD: {"
+                 "1:.2f}".format(flux_entries.mean(), flux_entries.std()))
+
+    # Save plotted values as a pickle dump named as the filename.
+    with open(filename[:-4] + '.pickle', 'wb') as f:
+        pickle.dump(flux_entries, f)
+
+    if (axis):
+        ax.set_xlim(axis[0],axis[1])
+        ax.set_ylim(axis[2],axis[3])
     fig.set_tight_layout(True)
     fig.canvas.draw()
     if (savefig):
